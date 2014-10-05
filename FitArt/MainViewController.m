@@ -35,6 +35,10 @@ uint8_t mode = POINTER_MODE;
     self.HIDServ = [OpenSpatialBluetooth sharedBluetoothServ];
     self.HIDServ.delegate = self;
     [super viewDidLoad];
+    [self.view setBackgroundColor:[UIColor whiteColor]];
+    
+   // RingScanTableViewController *ringScanTableViewController = [[RingScanTableViewController alloc] init];
+    
 }
 
 -(void) startLoop

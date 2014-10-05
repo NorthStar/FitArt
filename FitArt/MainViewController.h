@@ -8,12 +8,15 @@
 
 #import <UIKit/UIKit.h>
 #import <OpenSpatial/OpenSpatialBluetooth.h>
+#import "RingScanTableViewController.h"
 
 @interface MainViewController : UIViewController <OpenSpatialBluetoothDelegate>
 
 @property OpenSpatialBluetooth *HIDServ;
 @property CBPeripheral *lastNodPeripheral;
 
+@property UIButton *startPeripheral;
+@property UIButton *endPeripheral;
 -(void) startLoop;
 
 @end

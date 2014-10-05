@@ -7,6 +7,7 @@
 //
 
 #import "GameViewController.h"
+#import "MainViewController.h"
 
 @implementation GameViewController
 
@@ -99,12 +100,17 @@
             [SCNTransaction commit];
         }];
         
-        material.emission.contents = [UIColor redColor];
+        material.emission.contents = [UIColor grayColor];
         
         [SCNTransaction commit];
     }
+    [self startPeripheral];
 }
 
+- (void) startPeripheral {
+    MainViewController *mainViewController = [[MainViewController alloc] init];
+    [self presentViewController:mainViewController animated:YES completion:nil];
+}
 - (BOOL)shouldAutorotate
 {
     return YES;

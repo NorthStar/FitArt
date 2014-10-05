@@ -11,7 +11,7 @@
 #import <CoreBluetooth/CoreBluetooth.h>
 #import "MainViewController.h"
 
-@interface RingScanTableViewController : UITableViewController <OpenSpatialBluetoothDelegate>
+@interface RingScanTableViewController : UITableViewController <OpenSpatialBluetoothDelegate, UITableViewDataSource>
 
 @property CBPeripheral *lastNodPeripheral;
 
