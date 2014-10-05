@@ -104,7 +104,7 @@
         
         [SCNTransaction commit];
     }
-    [self startPeripheral];
+    //[self startPeripheral];
 }
 
 - (void) startPeripheral {

@@ -10,6 +10,10 @@
 
 @interface MainViewController ()
 
+@property int selectedIndex;
+@property (nonatomic, strong) OpenSpatialBluetooth *myHIDServ;
+
+
 @end
 
 @implementation MainViewController
@@ -27,21 +31,29 @@ uint8_t mode = POINTER_MODE;
 
 
 - (void) didFindNewDevice: (NSArray*) peripherals {
+    [self.tableView reloadData];
     return;
 }
 
 - (void)viewDidLoad
 {
-    self.HIDServ = [OpenSpatialBluetooth sharedBluetoothServ];
-    self.HIDServ.delegate = self;
     [super viewDidLoad];
     [self.view setBackgroundColor:[UIColor whiteColor]];
     
-   // RingScanTableViewController *ringScanTableViewController = [[RingScanTableViewController alloc] init];
+    self.HIDServ = [OpenSpatialBluetooth sharedBluetoothServ];
+    self.HIDServ.delegate = self;
     
+    self.tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 100, self.view.bounds.size.width, 500) style:UITableViewStylePlain];
+    [self.tableView setDelegate: self];
+    [self.tableView setDataSource:self];
+    [self.view addSubview:self.tableView];
+    /*
+     * Called to start the bluetooth scan and initialize the central manager
+     */
+    [self.myHIDServ scanForPeripherals];
 }
 
--(void) startLoop
+-(void)startLoop
 {
     [self.HIDServ setMode:mode forDeviceNamed:self.lastNodPeripheral.name];
     if(mode == POINTER_MODE)
@@ -171,13 +183,49 @@ uint8_t mode = POINTER_MODE;
     self.lastNodPeripheral = peripheral;
 }
 
-- (IBAction)subscribeEvents:(UIButton *)sender
+- (void)subscribeEvents:(UIButton *)sender
 {
     [self.HIDServ subscribeToButtonEvents:self.lastNodPeripheral.name];
     [self.HIDServ subscribeToGestureEvents:self.lastNodPeripheral.name];
     [self.HIDServ subscribeToPointerEvents:self.lastNodPeripheral.name];
     [self.HIDServ subscribeToRotationEvents:self.lastNodPeripheral.name];
 }
+
+
+#pragma mark - Table view data source
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 1;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return 30;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    // Return the number of rows in the section.
+    return [self.myHIDServ.foundPeripherals count];
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView
+         cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *CellIdentifier = @"DeviceCell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:
+                             indexPath];
+    CBPeripheral *rowElement = [self.myHIDServ.foundPeripherals objectAtIndex:indexPath.row];
+    cell.textLabel.text = rowElement.name;
+    return cell;
+}
+/*
+- (void)didFindNewDevice:(CBPeripheral*) peripheral
+{
+    [self.tableView reloadData];
+}*/
+
+
 
 #pragma mark private methods
 //helper for json sending
