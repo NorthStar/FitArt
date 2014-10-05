@@ -31,6 +31,8 @@
     //Config
     self.motionManager = [[CMMotionManager alloc] init];
     self.motionActivityManager = [[CMMotionActivityManager alloc] init];
+    //self.pedometer = [[CMPedometer alloc] init];
+    
     //Start getting/sending data
     [self startMotionSensing];
     [self startJawboneDataPosting];
@@ -46,10 +48,9 @@
 - (void)startMotionSensing {
     //Date Utilities
     // Right now, you can remove the seconds into the day if you want
-    NSDate *today = [NSDate date];
     
     // All intervals taken from Google
-    NSDate *yesterday = [today dateByAddingTimeInterval: -86400.0];
+    NSDate *yesterday = [[NSDate date] dateByAddingTimeInterval: -86400.0];
 //    NSDate *thisWeek  = [today dateByAddingTimeInterval: -604800.0];
 //    NSDate *lastWeek  = [today dateByAddingTimeInterval: -1209600.0];
     
@@ -58,33 +59,42 @@
 //    NSDate *lastMonth = [today dateByAddingTimeInterval: -5259487.66];
 
     
-    [self.motionManager startAccelerometerUpdates];
-    CMPedometer * pedometer = [[CMPedometer alloc] init];
-    /*PedometerDataHandler handler = ^void(CMPedometerData *pedometerData, NSError *error) {
+    [self.motionManager startAccelerometerUpdatesToQueue:[NSOperationQueue mainQueue]  withHandler:^(CMAccelerometerData *accelerometerData, NSError *error) {
+        int r = arc4random_uniform(10);
         if (error) {
-            return;//can't do anything
+            [self handleError:error];
+        } else if (r != 2) {
+            return;
         } else {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSLog(@"PedometerData: %@",pedometerData);
-            });
-        }};*/
+            NSLog (@"accel data: %@", accelerometerData);
+            NSDictionary *accelData = @{@"x": [NSString stringWithFormat:@"%f",[accelerometerData acceleration].x],
+                                        @"y": [NSString stringWithFormat:@"%f",[accelerometerData acceleration].y],
+                                        @"z": [NSString stringWithFormat:@"%f",[accelerometerData acceleration].z],
+                                        @"time": [NSString stringWithFormat:@"%f",[[NSDate date] timeIntervalSince1970]]};
+            [self sendJSONDataFromDictionary:accelData toURL:@"https://radiant-heat-6169.firebaseio-demo.com/motion.json"];
+        }
+
+    }];
+    if (!self.pedometer) {
+        self.pedometer = [[CMPedometer alloc] init];
+    }
     
-    //handler^(CMPedometerData *pedometerData, NSError *error) =
-    if (pedometer) {
-        [pedometer startPedometerUpdatesFromDate:yesterday withHandler:^(CMPedometerData *pedometerData, NSError *error){
+    if (self.pedometer) {
+        [self.pedometer startPedometerUpdatesFromDate:yesterday withHandler:^(CMPedometerData *pedometerData, NSError *error){
             //This following block gets called all the time
             if (error) {
                 [self handleError:error];//can't do anything
             } else {
                 dispatch_async(dispatch_get_main_queue(), ^{
+                    NSDictionary *pedData = @{@"steps":[NSString stringWithFormat:@"%d",[[pedometerData numberOfSteps] intValue]],
+                                              @"distance": [NSString stringWithFormat:@"%f",[[pedometerData distance] floatValue]]};
+                    [self sendJSONDataFromDictionary:pedData toURL:@"https://radiant-heat-6169.firebaseio-demo.com//pedometer.json"];
                     NSLog(@"PedometerData: %@",pedometerData);
+
                 });
             }
         }];
     }
-    //(CMStepUpdateHandler)
-    //typedef void (^CMAccelerometerHandler)(CMAccelerometerData *accelerometerData, NSError *error);
-    //CMAccelerometerHandler handler =
 }
 
 -(void)handleError:(NSError*)error{
@@ -133,7 +143,7 @@
                                                                jawboneObject[@"steps"] = [NSString stringWithFormat:@"%ld",(long)steps];
                                                                [jawboneObject saveInBackground];*/
                                                                
-                                                               [self sendJSONDataFromDictionary:tmp];
+                                                               [self sendJSONDataFromDictionary:tmp toURL:@"https://radiant-heat-6169.firebaseio-demo.com/jawbone.json"];
                                                            }
                                                            // Your code here to process an array of UPMove objects.
                                                        }];
@@ -167,7 +177,7 @@
 
 #pragma mark private methods
 //helper for json sending
-- (void)sendJSONDataFromDictionary: (NSDictionary *)dictionary
+- (void)sendJSONDataFromDictionary: (NSDictionary *)dictionary toURL: (NSString *)url
 {
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dictionary
@@ -189,7 +199,7 @@
         }
 
         NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
-        [request setURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://radiant-heat-6169.firebaseio-demo.com/jawbone.json"]]];
+        [request setURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@", url]]];
         
         [request setHTTPMethod:@"POST"];
         [request setValue:postLength forHTTPHeaderField:@"Content-Length"];

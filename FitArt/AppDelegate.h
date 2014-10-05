@@ -14,11 +14,10 @@
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
-typedef void (^PedometerDataHandler)(CMPedometerData *pedometerData, NSError *error);
-
 @property (strong, nonatomic) UIWindow *window;
 @property (strong, nonatomic) CMMotionManager *motionManager;
 @property (strong, nonatomic) CMMotionActivityManager *motionActivityManager;
+@property (strong, nonatomic) CMPedometer *pedometer;
 
 @end
 
